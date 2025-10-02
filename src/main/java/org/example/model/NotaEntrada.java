@@ -1,22 +1,29 @@
 package org.example.model;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 public class NotaEntrada {
 
     private int id;
     private int idFornecedor;
-    private Date dataEntrada;
+    private LocalDate dataEntrada;
 
     public NotaEntrada(int idFornecedor, Date dataEntrada) {
         this.idFornecedor = idFornecedor;
-        this.dataEntrada = dataEntrada;
+        this.dataEntrada = LocalDate.now();;
     }
+
 
     public NotaEntrada(int id, int idFornecedor, Date dataEntrada) {
         this.id = id;
         this.idFornecedor = idFornecedor;
-        this.dataEntrada = dataEntrada;
+        this.dataEntrada = LocalDate.now();;
+    }
+
+    public NotaEntrada(int idFornecedor) {
+        this.idFornecedor = idFornecedor;
+        this.dataEntrada = LocalDate.now();
     }
 
     public int getId() {
@@ -35,11 +42,12 @@ public class NotaEntrada {
         this.idFornecedor = idFornecedor;
     }
 
-    public Date getDataEntrada() {
+    public LocalDate getDataEntrada() {
         return dataEntrada;
     }
 
-    public void setDataEntrada(Date dataEntrada) {
+    public void setDataEntrada(LocalDate dataEntrada) {
         this.dataEntrada = dataEntrada;
     }
+
 }

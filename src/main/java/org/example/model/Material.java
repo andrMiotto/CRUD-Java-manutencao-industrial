@@ -19,6 +19,10 @@ public class Material {
         this.estoque = estoque;
     }
 
+    public Material() {
+
+    }
+
     public int getId() {
         return id;
     }

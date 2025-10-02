@@ -1,15 +1,17 @@
 package org.example.app;
 
 
+import org.example.dao.EntradaItemDao;
 import org.example.dao.FornecedorDao;
 import org.example.dao.MaterialDao;
+import org.example.dao.NotaEntradaDao;
 import org.example.model.Fornecedor;
 import org.example.model.Material;
+import org.example.model.NotaEntrada;
+import org.example.model.NotaEntradaItem;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
     static Scanner sc = new Scanner(System.in);
@@ -37,6 +39,7 @@ public class Main {
 
         int opcao = sc.nextInt();
         sc.nextLine();
+
         switch (opcao) {
             case 1: {
                 cadastrarFornecedor();
@@ -65,8 +68,16 @@ public class Main {
                 cancelarRequisicao();
                 break;
             }
+
+            case 0: {
+                sair = true;
+                break;
+            }
         }
 
+        if (!sair) {
+            inicio();
+        }
     }
 
     public static void cadastrarFornecedor() throws SQLException {
@@ -75,17 +86,20 @@ public class Main {
         var fornecedorDao = new FornecedorDao();
 
         System.out.println("Digite o nome do fornecedor: ");
+        System.out.print("> ");
+
         String nome = sc.nextLine();
 
 
         System.out.println("Digite o CNPJ do fornecedor: ");
+        System.out.print("> ");
         String cnpj = sc.nextLine();
 
         if (!nome.isEmpty() && !cnpj.isEmpty()) {
             var fornecedor = new Fornecedor(nome, cnpj);
 
             try {
-                if (fornecedorDao.verificarDuplicidadeFornecedor(fornecedor)) {
+                if (!fornecedorDao.verificarDuplicidadeFornecedor(fornecedor)) {
                     fornecedorDao.cadastrarFornecedor(fornecedor);
                     System.out.println("Fornecedor cadastrado com sucesso!!!");
 
@@ -111,22 +125,27 @@ public class Main {
         var daoMaterial = new MaterialDao();
 
         System.out.println("Digite o nome do material: ");
+        System.out.print("> ");
+
         String nome = sc.nextLine();
 
         System.out.println("Digite a unidade de medida: ");
+        System.out.print("> ");
+
         String unidade = sc.nextLine();
 
         System.out.println("Digite o estoque do material: ");
+        System.out.print("> ");
+
         Double estoque = sc.nextDouble();
 
         if (!nome.isEmpty() && !unidade.isEmpty() && estoque > 0) {
             var material = new Material(nome, unidade, estoque);
 
             try {
-                if (daoMaterial.verificarDuplicidadeMaterial(material)) {
+                if (!daoMaterial.verificarDuplicidadeMaterial(material)) {
                     daoMaterial.cadastrarMateriais(material);
                     System.out.println("Material cadastrado com sucesso!!!");
-
                 } else {
                     System.out.println("Material já cadastrado");
                 }
@@ -144,15 +163,94 @@ public class Main {
     }
 
     public static void registrarNotaEntrada() throws SQLException {
-        System.out.println("REGISTRAR NOTA DE ENTRADA");
+        System.out.println("=== REGISTRAR NOTA DE ENTRADA ===");
 
         var fornecedorDao = new FornecedorDao();
         List<Fornecedor> listaFornecedores = fornecedorDao.listarFornecedores();
+        System.out.println(">>> LISTA DE FORNECEDORES <<<");
 
-        for(Fornecedor f: listaFornecedores){
-            System.out.println("ID: "+f.getId() + "\n Nome: " + f.getNome() + "\n CNPJ: " + f.getCnpj());
+        for (Fornecedor f : listaFornecedores) {
+            System.out.println("ID: " + f.getId() + "\n Nome: " + f.getNome() + "\n CNPJ: " + f.getCnpj());
 
         }
+        System.out.println("Escolha um fornecedor: ");
+        System.out.print("> ");
+        int idFornecedor = sc.nextInt();
+        Fornecedor fornecedor = new Fornecedor();
+        fornecedor.setId(idFornecedor);
+
+        if (!fornecedorDao.validarExistencia(fornecedor)) {
+            System.out.println("Fornecedor não encontrado!");
+            return;
+        } else {
+            System.out.println("Fornecedor válido!");
+        }
+
+        var daoNotaEntrada = new NotaEntradaDao();
+
+        var nota = new NotaEntrada(idFornecedor);
+
+        daoNotaEntrada.inserirNota(nota);
+
+
+        boolean continuar = true;
+
+        Set<Integer> idsSelecionados = new HashSet<>();
+
+        int idNotaEntrada = nota.getId();
+        while (continuar) {
+            var materialDao = new MaterialDao();
+
+            List<Material> listaMateriais = materialDao.listarTodos();
+
+            System.out.println(">>> LISTA DE MATERIAIS <<<");
+            for (Material m : listaMateriais) {
+                System.out.println("ID: " + m.getId() + "\n Nome: " + m.getNome() + "\n Unidade: " + m.getUnidade() + "\n Estoque: " + m.getEstoque());
+            }
+
+            System.out.println("Escolha um material: ");
+            System.out.print("> ");
+            int idMaterial = sc.nextInt();
+
+            Material material = new Material();
+            material.setId(idMaterial);
+
+
+            if (!materialDao.verificarExistencia(material)) {
+                System.out.println("Material não encontrado!");
+                return;
+            } else {
+                System.out.println("Material válido!");
+            }
+
+            System.out.print("Quantidade recebida: ");
+            double quantidade = sc.nextDouble();
+
+            if(idsSelecionados.contains(idMaterial)){
+                System.out.println("Esse material já foi adicionado!");
+            }else{
+                idsSelecionados.add(idMaterial);
+                System.out.println("Material adicionado com sucesso!");
+            }
+
+
+            var itemNota = new NotaEntradaItem(idNotaEntrada, idMaterial, quantidade);
+
+            var daoEntradaItem = new EntradaItemDao();
+            daoEntradaItem.inserirItemNota(itemNota);
+
+            daoNotaEntrada.atualizarEstoque(idMaterial, quantidade);
+
+
+            System.out.println("Deseja adiconar mais um material?\n 1 - SIM \n 2 - NÃO");
+            System.out.print("> ");
+            int opcao = sc.nextInt();
+
+            if (opcao == 2) {
+                continuar = false;
+            }
+        }
+
 
     }
 

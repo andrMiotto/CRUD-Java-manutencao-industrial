@@ -13,7 +13,7 @@ import java.util.List;
 public class FornecedorDao {
 
     public Fornecedor cadastrarFornecedor(Fornecedor fornecedor) throws SQLException {
-        String query = "INSERT INTO Fornecedor nome,cnpj VALUES (?,?);";
+        String query = "INSERT INTO Fornecedor (nome,cnpj) VALUES (?,?);";
         try (Connection connection = Conexao.conectar();
              PreparedStatement stmt = connection.prepareStatement(query)) {
 
@@ -70,6 +70,24 @@ public class FornecedorDao {
 
         }
         return fornecedores;
+    }
+
+
+    public boolean validarExistencia(Fornecedor fornecedor) throws SQLException {
+        String query = "SELECT COUNT(0) AS linhas FROM Fornecedor WHERE id = ?";
+
+        try (Connection connection = Conexao.conectar();
+             PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, fornecedor.getId());
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next() && rs.getInt("linhas") > 0) {
+                return true;
+            }
+
+        }
+        return false;
     }
 
 

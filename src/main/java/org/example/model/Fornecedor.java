@@ -17,6 +17,10 @@ public class Fornecedor
         this.cnpj = cnpj;
     }
 
+    public Fornecedor() {
+
+    }
+
     public int getId() {
         return id;
     }
